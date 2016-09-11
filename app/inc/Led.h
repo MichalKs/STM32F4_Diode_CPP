@@ -22,30 +22,73 @@
 
 namespace mkstm32 {
 
+/**
+ * @brief LED class
+ */
 class Led {
 
 public:
-
+  /**
+   * @brief State of the LED
+   */
   enum LedState {
-    LED_OFF,
-    LEN_ON
+    LED_OFF,//!< LED_OFF
+    LED_ON  //!< LED_ON
   };
-
-  Led(Gpio gpio): gpio(gpio) {
-
+  /**
+   * @brief Sets LED to active high or low
+   */
+  enum LedActiveLevel {
+    ACTIVE_LOW, //!< ACTIVE_LOW
+    ACTIVE_HIGH,//!< ACTIVE_HIGH
+  };
+  /**
+   * @brief This function initalizes the LED by initalizing the GPIO
+   * @param gpioPort Port of the LED
+   * @param gpioPin Pin number of the LED
+   */
+  Led(Gpio::GpioPortName gpioPort, int gpioPin, LedActiveLevel ledActiveLevel = ACTIVE_HIGH):
+    gpio(gpioPort, gpioPin, Gpio::GPIO_MODE_OUT_PUSH_PULL) {
+    this->ledActiveLevel = ledActiveLevel;
+    off(); // turn the LED off initially
   }
-
+  /**
+   * @brief Turn LED on
+   */
   void on() {
-    gpio.on();
+    if (ledActiveLevel == ACTIVE_HIGH) {
+      gpio.on();
+    } else {
+      gpio.off();
+    }
+    ledState = LED_ON;
   }
-
+  /**
+   * @brief Turn LED off
+   */
   void off() {
-    gpio.off();
+    if (ledActiveLevel == ACTIVE_HIGH) {
+      gpio.off();
+    } else {
+      gpio.on();
+    }
+    ledState = LED_OFF;
+  }
+  /**
+   * @brief Toggles LED state
+   */
+  void toggle() {
+    if (ledState == LED_OFF) {
+      on();
+    } else {
+      off();
+    }
   }
 
 private:
-
-  Gpio gpio;
+  Gpio gpio; ///< The GPIO of the LED
+  LedState ledState; ///< The state of the LED
+  LedActiveLevel ledActiveLevel; ///< Tells whether LED is active high or low
 
 };
 

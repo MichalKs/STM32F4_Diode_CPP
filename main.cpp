@@ -23,13 +23,12 @@ using namespace mkstm32;
 
 int main(void) {
 
-  Gpio orangeLedGpio(Gpio::GPIO_PORT_D, 12, Gpio::GPIO_MODE_OUT_PUSH_PULL);
-
-  Led orangeLed(orangeLedGpio);
+  Led orangeLed(Gpio::GPIO_PORT_D, 13, Led::ACTIVE_LOW);
   orangeLed.on();
 
   while(1) {
-
+    orangeLed.on();
+    orangeLed.off();
   }
 
   return 0;

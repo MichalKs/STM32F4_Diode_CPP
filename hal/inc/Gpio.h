@@ -22,27 +22,39 @@
 
 namespace mkstm32 {
 
+/**
+ * @brief GPIO pin class
+ */
 class Gpio {
 
 public:
+  /**
+   * @brief Port name
+   */
   enum GpioPortName {
-    GPIO_PORT_A,
-    GPIO_PORT_B,
-    GPIO_PORT_C,
-    GPIO_PORT_D,
-    GPIO_PORT_E,
-
+    GPIO_PORT_A,//!< GPIO_PORT_A
+    GPIO_PORT_B,//!< GPIO_PORT_B
+    GPIO_PORT_C,//!< GPIO_PORT_C
+    GPIO_PORT_D,//!< GPIO_PORT_D
+    GPIO_PORT_E,//!< GPIO_PORT_E
   };
-
+  /**
+   * @brief Gpio mode
+   */
   enum GpioMode {
-    GPIO_MODE_IN,
-    GPIO_MODE_OUT_OPEN_DRAIN,
-    GPIO_MODE_OUT_PUSH_PULL,
+    GPIO_MODE_IN,            //!< GPIO_MODE_IN
+    GPIO_MODE_OUT_OPEN_DRAIN,//!< GPIO_MODE_OUT_OPEN_DRAIN
+    GPIO_MODE_OUT_PUSH_PULL, //!< GPIO_MODE_OUT_PUSH_PULL
   };
-
-  Gpio(GpioPortName gpioPort, int gpioPin, GpioMode gpioMode) {
+  /**
+   * @brief
+   * @param gpioPort Port name
+   * @param gpioPin Pin number
+   * @param gpioMode Mode of GPIO
+   */
+  Gpio(GpioPortName gpioPort, unsigned int gpioPin, GpioMode gpioMode) {
     this->gpioPort = gpioPort;
-    this->gpioPin = gpioPin;
+    this->gpioPin = (1 << gpioPin);
     this->gpioMode = gpioMode;
 
     enableGpioClock(gpioPort);
@@ -53,68 +65,42 @@ public:
     GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 
-    GPIO_InitStruct.Pin = 1<<(uint16_t)gpioPin;
+    GPIO_InitStruct.Pin = this->gpioPin;
 
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+    HAL_GPIO_Init(getGpioType(gpioPort), &GPIO_InitStruct);
 
   }
-
-  Gpio(const Gpio& model) {
-    this->gpioPort = model.gpioPort;
-    this->gpioPin = model.gpioPin;
-    this->gpioMode = model.gpioMode;
-  }
-
+  /**
+   * @brief Set GPIO high
+   */
   void on() {
-    HAL_GPIO_WritePin(GPIOD, 1<<(uint16_t)gpioPin, GPIO_PIN_SET);
+    getGpioType(gpioPort)->BSRR = (gpioPin << 16);
   }
+  /**
+   * @brief Set GPIO low
+   */
   void off() {
-    HAL_GPIO_WritePin(GPIOD, 1<<(uint16_t)gpioPin, GPIO_PIN_RESET);
+    getGpioType(gpioPort)->BSRR = gpioPin;
   }
 
 private:
+  /**
+   * @brief Enables the GPIO clock
+   * @param port Port to enable
+   */
+  void enableGpioClock(GpioPortName port);
+  /**
+   * @brief Get ST GPIO type
+   * @param port Port name
+   * @return The ST GPIO type
+   */
+  GPIO_TypeDef* getGpioType(GpioPortName port);
 
-  void enableGpioClock(GpioPortName port) {
-
-    unsigned int bit;
-
-    switch (port) {
-    case GPIO_PORT_A:
-      bit = RCC_AHB1ENR_GPIOAEN;
-      break;
-
-    case GPIO_PORT_B:
-      bit = RCC_AHB1ENR_GPIOBEN;
-      break;
-
-    case GPIO_PORT_C:
-      bit = RCC_AHB1ENR_GPIOCEN;
-      break;
-
-    case GPIO_PORT_D:
-      bit = RCC_AHB1ENR_GPIODEN;
-      break;
-
-    case GPIO_PORT_E:
-      bit = RCC_AHB1ENR_GPIOEEN;
-      break;
-
-    default:
-      return;
-
-    }
-
-    RCC->AHB1ENR |= bit;
-    bit &= RCC->AHB1ENR;
-  }
-
-  GpioPortName gpioPort;
-  int gpioPin;
-  GpioMode gpioMode;
+  GpioPortName gpioPort; ///< GPIO port name
+  unsigned int gpioPin; ///< GPIO pin number
+  GpioMode gpioMode; ///< Gpio mode
 };
 
 }
-
-
 
 #endif /* INC_GPIO_H_ */

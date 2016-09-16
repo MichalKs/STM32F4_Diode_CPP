@@ -18,7 +18,7 @@
 #ifndef INC_GPIO_H_
 #define INC_GPIO_H_
 
-#include <stm32f4xx.h>
+#include <stm32f407xx.h>
 
 namespace mkstm32 {
 
@@ -42,9 +42,22 @@ public:
    * @brief Gpio mode
    */
   enum GpioMode {
-    GPIO_MODE_IN,            //!< GPIO_MODE_IN
-    GPIO_MODE_OUT_OPEN_DRAIN,//!< GPIO_MODE_OUT_OPEN_DRAIN
-    GPIO_MODE_OUT_PUSH_PULL, //!< GPIO_MODE_OUT_PUSH_PULL
+    GPIO_MODE_IN = 0,
+    GPIO_MODE_OUTPUT = 1,
+    GPIO_MODE_ALTERNATE = 2,
+    GPIO_MODE_ANALOGUE = 3,
+  };
+
+  enum GpioOutputType {
+    GPIO_PUSH_PULL = 0,
+    GPIO_OPEN_DRAIN = 1,
+  };
+
+  enum GpioSpeed {
+    GPIO_LOW_SPEED = 0,
+    GPIO_MEDIUM_SPEED = 1,
+    GPIO_FAST_SPEED = 2,
+    GPIO_HIGH_SPEED = 3,
   };
   /**
    * @brief
@@ -52,22 +65,30 @@ public:
    * @param gpioPin Pin number
    * @param gpioMode Mode of GPIO
    */
-  Gpio(GpioPortName gpioPort, unsigned int gpioPin, GpioMode gpioMode) {
+  Gpio(GpioPortName gpioPort, unsigned int gpioPin, GpioMode gpioMode,
+      GpioSpeed gpioSpeed = GPIO_LOW_SPEED,
+      GpioOutputType gpioOutputType = GPIO_PUSH_PULL) {
+
     this->gpioPort = gpioPort;
     this->gpioPin = (1 << gpioPin);
     this->gpioMode = gpioMode;
 
     enableGpioClock(gpioPort);
 
-    GPIO_InitTypeDef GPIO_InitStruct;
+    unsigned int moderRegisterValue = getGpioType(gpioPort)->MODER;
+    moderRegisterValue &= ~(GPIO_MODER_MODER0 << (gpioPin * 2u));
+    moderRegisterValue |= (gpioMode << (gpioPin * 2u));
+    getGpioType(gpioPort)->MODER = moderRegisterValue;
 
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    unsigned int outputTypeRegisterValue = getGpioType(gpioPort)->OTYPER;
+    outputTypeRegisterValue &= ~(GPIO_OTYPER_ODR_0 << gpioPin);
+    outputTypeRegisterValue |= (gpioOutputType << gpioPin);
+    getGpioType(gpioPort)->OTYPER = outputTypeRegisterValue;
 
-    GPIO_InitStruct.Pin = this->gpioPin;
-
-    HAL_GPIO_Init(getGpioType(gpioPort), &GPIO_InitStruct);
+    unsigned int speedTypeRegisterValue = getGpioType(gpioPort)->OSPEEDR;
+    speedTypeRegisterValue &= ~(GPIO_OSPEEDER_OSPEEDR0 << gpioPin);
+    speedTypeRegisterValue |= (gpioSpeed << gpioPin);
+    getGpioType(gpioPort)->OSPEEDR = speedTypeRegisterValue;
 
   }
   /**

@@ -16,6 +16,7 @@
  * @endverbatim
  */
 
+#include "SystemTimer.h"
 #include "Led.h"
 #include "Gpio.h"
 
@@ -23,12 +24,16 @@ using namespace mkstm32;
 
 int main(void) {
 
+  SystemTimer::init();
+
   Led orangeLed(Gpio::GPIO_PORT_D, 13, Led::ACTIVE_LOW);
   orangeLed.on();
 
   while(1) {
     orangeLed.on();
+    SystemTimer::delayMillis(500);
     orangeLed.off();
+    SystemTimer::delayMillis(500);
   }
 
   return 0;

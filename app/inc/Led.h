@@ -47,7 +47,7 @@ public:
    * @param gpioPort Port of the LED
    * @param gpioPin Pin number of the LED
    */
-  Led(Gpio::GpioPortName gpioPort, int gpioPin, LedActiveLevel ledActiveLevel = ACTIVE_HIGH):
+  Led(Gpio::GpioPortName gpioPort, Gpio::GpioPin gpioPin, LedActiveLevel ledActiveLevel = ACTIVE_HIGH):
     gpio(gpioPort, gpioPin, Gpio::GPIO_MODE_OUTPUT) {
     this->ledActiveLevel = ledActiveLevel;
     off(); // turn the LED off initially

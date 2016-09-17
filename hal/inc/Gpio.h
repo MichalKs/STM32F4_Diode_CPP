@@ -38,70 +38,110 @@ public:
     GPIO_PORT_D,//!< GPIO_PORT_D
     GPIO_PORT_E,//!< GPIO_PORT_E
   };
-  /**
-   * @brief Gpio mode
-   */
   enum GpioMode {
-    GPIO_MODE_IN = 0,
-    GPIO_MODE_OUTPUT = 1,
-    GPIO_MODE_ALTERNATE = 2,
-    GPIO_MODE_ANALOGUE = 3,
+    GPIO_MODE_IN,
+    GPIO_MODE_OUTPUT,
+    GPIO_MODE_ALTERNATE,
+    GPIO_MODE_ANALOGUE,
   };
 
   enum GpioOutputType {
-    GPIO_PUSH_PULL = 0,
-    GPIO_OPEN_DRAIN = 1,
+    GPIO_PUSH_PULL,
+    GPIO_OPEN_DRAIN,
   };
 
   enum GpioSpeed {
-    GPIO_LOW_SPEED = 0,
-    GPIO_MEDIUM_SPEED = 1,
-    GPIO_FAST_SPEED = 2,
-    GPIO_HIGH_SPEED = 3,
+    GPIO_LOW_SPEED,
+    GPIO_MEDIUM_SPEED,
+    GPIO_FAST_SPEED,
+    GPIO_HIGH_SPEED,
   };
+
+  enum GpioPull {
+    GPIO_NO_PULL,
+    GPIO_PULL_UP,
+    GPIO_PULL_DOWN,
+  };
+
+  enum GpioPin {
+    GPIO_PIN_NO_0,
+    GPIO_PIN_NO_1,
+    GPIO_PIN_NO_2,
+    GPIO_PIN_NO_3,
+    GPIO_PIN_NO_4,
+    GPIO_PIN_NO_5,
+    GPIO_PIN_NO_6,
+    GPIO_PIN_NO_7,
+    GPIO_PIN_NO_8,
+    GPIO_PIN_NO_9,
+    GPIO_PIN_NO_10,
+    GPIO_PIN_NO_11,
+    GPIO_PIN_NO_12,
+    GPIO_PIN_NO_13,
+    GPIO_PIN_NO_14,
+    GPIO_PIN_NO_15,
+  };
+
+  enum GpioAlternateFunction {
+    GPIO_AF_0,
+    GPIO_AF_1,
+    GPIO_AF_2,
+    GPIO_AF_3,
+    GPIO_AF_4,
+    GPIO_AF_5,
+    GPIO_AF_6,
+    GPIO_AF_7,
+    GPIO_AF_8,
+    GPIO_AF_9,
+    GPIO_AF_10,
+    GPIO_AF_11,
+    GPIO_AF_12,
+    GPIO_AF_13,
+    GPIO_AF_14,
+    GPIO_AF_15,
+  };
+
   /**
-   * @brief
+   * @brief GPIO constructor
    * @param gpioPort Port name
    * @param gpioPin Pin number
-   * @param gpioMode Mode of GPIO
+   * @param gpioMode Pin mode
+   * @param gpioSpeed Output pin speed
+   * @param gpioOutputType Output Pin type
+   * @param gpioPull Pullup or pulldown
+   * @param gpioAlternateFunction Alternate function number
    */
-  Gpio(GpioPortName gpioPort, unsigned int gpioPin, GpioMode gpioMode,
+  Gpio(GpioPortName gpioPort, GpioPin gpioPin, GpioMode gpioMode,
       GpioSpeed gpioSpeed = GPIO_LOW_SPEED,
-      GpioOutputType gpioOutputType = GPIO_PUSH_PULL) {
+      GpioOutputType gpioOutputType = GPIO_PUSH_PULL,
+      GpioPull gpioPull = GPIO_NO_PULL,
+      GpioAlternateFunction gpioAlternateFunction = GPIO_AF_0);
 
-    this->gpioPort = gpioPort;
-    this->gpioPin = (1 << gpioPin);
-    this->gpioMode = gpioMode;
-
-    enableGpioClock(gpioPort);
-
-    unsigned int moderRegisterValue = getGpioType(gpioPort)->MODER;
-    moderRegisterValue &= ~(GPIO_MODER_MODER0 << (gpioPin * 2u));
-    moderRegisterValue |= (gpioMode << (gpioPin * 2u));
-    getGpioType(gpioPort)->MODER = moderRegisterValue;
-
-    unsigned int outputTypeRegisterValue = getGpioType(gpioPort)->OTYPER;
-    outputTypeRegisterValue &= ~(GPIO_OTYPER_ODR_0 << gpioPin);
-    outputTypeRegisterValue |= (gpioOutputType << gpioPin);
-    getGpioType(gpioPort)->OTYPER = outputTypeRegisterValue;
-
-    unsigned int speedTypeRegisterValue = getGpioType(gpioPort)->OSPEEDR;
-    speedTypeRegisterValue &= ~(GPIO_OSPEEDER_OSPEEDR0 << gpioPin);
-    speedTypeRegisterValue |= (gpioSpeed << gpioPin);
-    getGpioType(gpioPort)->OSPEEDR = speedTypeRegisterValue;
-
-  }
   /**
    * @brief Set GPIO high
    */
   void on() {
-    getGpioType(gpioPort)->BSRR = (gpioPin << 16);
+    getGpioType(gpioPort)->BSRR = gpioPin;
   }
   /**
    * @brief Set GPIO low
    */
   void off() {
-    getGpioType(gpioPort)->BSRR = gpioPin;
+    const int RESET_BITS_OFFSET = 16;
+    getGpioType(gpioPort)->BSRR = (gpioPin << RESET_BITS_OFFSET);
+  }
+  /**
+   * @brief Read data on pin
+   * @retval true Pin is set
+   * @retval false Pin is reset
+   */
+  bool read() {
+    unsigned int portValues = getGpioType(gpioPort)->IDR;
+    if (portValues & gpioPin) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
 private:
@@ -117,9 +157,9 @@ private:
    */
   GPIO_TypeDef* getGpioType(GpioPortName port);
 
-  GpioPortName gpioPort; ///< GPIO port name
-  unsigned int gpioPin; ///< GPIO pin number
-  GpioMode gpioMode; ///< Gpio mode
+  GpioPortName gpioPort;  ///< GPIO port name
+  unsigned int gpioPin;   ///< GPIO pin number
+  GpioMode gpioMode;      ///< Gpio mode
 };
 
 }

@@ -7,12 +7,7 @@
 
 #include <stm32f4xx.h>
 
-/**
- * @brief Interrupt handler for SysTick.
- */
-void SysTick_Handler(void) {
-  HAL_IncTick();
-}
+
 /**
   * @brief   This function handles NMI exception.
   */

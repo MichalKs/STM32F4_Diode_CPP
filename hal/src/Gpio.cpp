@@ -20,6 +20,53 @@
 
 namespace mkstm32 {
 
+/**
+ * @brief
+ * @param gpioPort Port name
+ * @param gpioPin Pin number
+ * @param gpioMode Mode of GPIO
+ */
+Gpio::Gpio(GpioPortName gpioPort, GpioPin gpioPin, GpioMode gpioMode,
+    GpioSpeed gpioSpeed, GpioOutputType gpioOutputType,
+    GpioPull gpioPull, GpioAlternateFunction gpioAlternateFunction) {
+
+  this->gpioPort = gpioPort;
+  this->gpioPin = (1 << gpioPin);
+  this->gpioMode = gpioMode;
+
+  enableGpioClock(gpioPort);
+
+  unsigned int moderRegisterValue = getGpioType(gpioPort)->MODER;
+  moderRegisterValue &= ~(GPIO_MODER_MODER0 << (gpioPin * 2));
+  moderRegisterValue |= (gpioMode << (gpioPin * 2));
+  getGpioType(gpioPort)->MODER = moderRegisterValue;
+
+  unsigned int outputTypeRegisterValue = getGpioType(gpioPort)->OTYPER;
+  outputTypeRegisterValue &= ~(GPIO_OTYPER_ODR_0 << gpioPin);
+  outputTypeRegisterValue |= (gpioOutputType << gpioPin);
+  getGpioType(gpioPort)->OTYPER = outputTypeRegisterValue;
+
+  unsigned int speedTypeRegisterValue = getGpioType(gpioPort)->OSPEEDR;
+  speedTypeRegisterValue &= ~(GPIO_OSPEEDER_OSPEEDR0 << (gpioPin*2));
+  speedTypeRegisterValue |= (gpioSpeed << gpioPin);
+  getGpioType(gpioPort)->OSPEEDR = speedTypeRegisterValue;
+
+  const int ARFL_REGISTER_RANGE = 7;
+  if (gpioPin <= ARFL_REGISTER_RANGE) {
+    unsigned int alternateFunctionRegisterValue = getGpioType(gpioPort)->AFR[0];
+    alternateFunctionRegisterValue &= ~(0xf << (gpioPin*4));
+    alternateFunctionRegisterValue |= (gpioAlternateFunction << (gpioPin*4));
+    getGpioType(gpioPort)->AFR[0] = alternateFunctionRegisterValue;
+  } else {
+    unsigned int alternateFunctionRegisterValue = getGpioType(gpioPort)->AFR[1];
+    alternateFunctionRegisterValue &= ~(0xf << (gpioPin*4));
+    alternateFunctionRegisterValue |= (gpioAlternateFunction << (gpioPin*4));
+    getGpioType(gpioPort)->AFR[1] = alternateFunctionRegisterValue;
+  }
+
+
+}
+
 void Gpio::enableGpioClock(GpioPortName port) {
 
   unsigned int bit;

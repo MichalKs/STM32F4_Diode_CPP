@@ -16,7 +16,7 @@
  * @endverbatim
  */
 
-#include "SystemTimer.h"
+#include <SystemControl.h>
 #include "Led.h"
 #include "Gpio.h"
 
@@ -24,16 +24,18 @@ using namespace mkstm32;
 
 int main(void) {
 
-  SystemTimer::init();
+  const int BLINK_DELAY = 500;
 
-  Led orangeLed(Gpio::GPIO_PORT_D, 13, Led::ACTIVE_LOW);
+  SystemControl::init();
+
+  Led orangeLed(Gpio::GPIO_PORT_D, Gpio::GPIO_PIN_NO_13, Led::ACTIVE_HIGH);
   orangeLed.on();
 
   while(1) {
     orangeLed.on();
-    SystemTimer::delayMillis(500);
+    SystemControl::delayMillis(BLINK_DELAY);
     orangeLed.off();
-    SystemTimer::delayMillis(500);
+    SystemControl::delayMillis(BLINK_DELAY);
   }
 
   return 0;
